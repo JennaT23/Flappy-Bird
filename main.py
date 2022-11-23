@@ -4,12 +4,17 @@ import os
 import time
 import neat
 import visualize
-import pickle
 pygame.font.init()  # init font
 
 WIDTH = 600
 HEIGHT = 800
 FLOOR = 730
+
+BACKGROUND_WIDTH = 600
+BACKGROUND_HEIGHT = 900
+
+NUM_OF_GENERATIONS = 5
+SCORE_LIMIT = 5
 
 # for the meme of comicsans
 STAT_FONT = pygame.font.SysFont("comicsans", 50)
@@ -19,10 +24,15 @@ BIRD_TO_PIPE_LINES = True
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("445 Project :)")
 
-pipe_image = pygame.transform.scale2x(pygame.image.load(os.path.join("images", "pipe.png")).convert_alpha())
-background_image = pygame.transform.scale(pygame.image.load(os.path.join("images", "bg.png")).convert_alpha(), (600, 900))
-player_images = [pygame.transform.scale2x(pygame.image.load(os.path.join("images", "bird" + str(x) + ".png"))) for x in range(1, 4)]
-ground_image = pygame.transform.scale2x(pygame.image.load(os.path.join("images", "base.png")).convert_alpha())
+PLAYER_JUMP_VELOCITY = -10.5
+PLAYER_TERMINAL_VELOCITY = 16
+
+pipe_image = pygame.transform.scale2x(pygame.image.load('images/pipe.png').convert_alpha())
+background_image = pygame.transform.scale(pygame.image.load('images/bg.png').convert_alpha(), (BACKGROUND_WIDTH, BACKGROUND_HEIGHT))
+player_images = []
+for x in range(1, 4):
+    player_images.append(pygame.transform.scale2x(pygame.image.load('images/bird' + str(x) + '.png')))
+ground_image = pygame.transform.scale2x(pygame.image.load('images/base.png').convert_alpha())
 
 generation = 0
 
@@ -43,7 +53,7 @@ class Player:
         self.img = self.ANIMATION_IMAGES[0]
 
     def jump(self):
-        self.vel = -10.5
+        self.vel = PLAYER_JUMP_VELOCITY
         self.tick_count = 0
         self.height = self.y
 
@@ -54,8 +64,8 @@ class Player:
         displacement = self.vel * self.tick_count + 0.5 * 3 * (self.tick_count ** 2)
 
         # terminal velocity
-        if displacement >= 16:
-            displacement = (displacement/abs(displacement)) * 16
+        if displacement >= PLAYER_TERMINAL_VELOCITY:
+            displacement = (displacement/abs(displacement)) * PLAYER_TERMINAL_VELOCITY
 
         if displacement < 0:
             displacement -= 2
@@ -135,7 +145,7 @@ class Pipe:
         win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
 
 
-    def collide(self, bird, win):
+    def collide(self, bird):
         # check the collision using pygame masks
         bird_mask = bird.get_mask()
         top_mask = pygame.mask.from_surface(self.PIPE_TOP)
@@ -153,8 +163,8 @@ class Pipe:
 
         return False
 
-class Base:
-    VEL = 5
+class Ground:
+    GROUND_VELOCITY = 5
     WIDTH = ground_image.get_width()
     IMG = ground_image
 
@@ -164,8 +174,8 @@ class Base:
         self.x2 = self.WIDTH
 
     def move(self):
-        self.x1 -= self.VEL
-        self.x2 -= self.VEL
+        self.x1 -= self.GROUND_VELOCITY
+        self.x2 -= self.GROUND_VELOCITY
         if self.x1 + self.WIDTH < 0:
             self.x1 = self.x2 + self.WIDTH
 
@@ -237,7 +247,7 @@ def genome_evaluation(genomes, config):
         birds.append(Player(230, 350)) # add genomes number of bird instances into the birds lise
         ge.append(genome)
 
-    base = Base(FLOOR) # create the base of the map
+    base = Ground(FLOOR) # create the base of the map
     pipes = [Pipe(700)] #create pipes
     score = 0
 
@@ -265,11 +275,10 @@ def genome_evaluation(genomes, config):
         for x, bird in enumerate(birds):  # give each bird a fitness of 0.1 for each frame it stays alive
             ge[x].fitness += 0.1
             bird.move()
-
             # send bird location, top pipe location and bottom pipe location and determine from network whether to jump or not
             output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
 
-            if output[0] > 0.5:  # we use a tan-h activation function so result will be between -1 and 1. if over 0.5 jump
+            if output[0] > 0.5:  # tan-h activation function. If over 0.5, bird will jump
                 bird.jump()
 
         base.move()
@@ -282,7 +291,7 @@ def genome_evaluation(genomes, config):
             # for each bird in the bird list
             for bird in birds:
                 # check for collision
-                if pipe.collide(bird, win):
+                if pipe.collide(bird):
                     ge[birds.index(bird)].fitness -= 1 # reduce fitness
                     nets.pop(birds.index(bird)) # remove the 'dead' birds from the net, genome, and birds list
                     ge.pop(birds.index(bird))
@@ -317,10 +326,8 @@ def genome_evaluation(genomes, config):
         draw_game(WINDOW, birds, pipes, base, score, generation, pipe_ind)
 
         # score limit
-        '''if score > 20:
-            pickle.dump(nets[0],open("best.pickle", "wb"))
-            break'''
-
+        if score > SCORE_LIMIT:
+            break
 
 def run_neat_algorithm(config_file):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
@@ -334,10 +341,13 @@ def run_neat_algorithm(config_file):
     p.add_reporter(stats)
 
     # Run for up to 50 generations.
-    winner = p.run(genome_evaluation, 50)
+    winner = p.run(genome_evaluation, NUM_OF_GENERATIONS)
 
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
+
+    visualize.draw_net(config, winner)
+    visualize.plot_stats(stats)
 
 if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
