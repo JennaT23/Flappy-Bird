@@ -51,6 +51,7 @@ class Player:
         self.height = self.y
         self.animation_number = 0
         self.img = self.ANIMATION_IMAGES[0]
+        self.jumping = False
 
     def jump(self):
         self.vel = PLAYER_JUMP_VELOCITY
@@ -234,6 +235,11 @@ def genome_evaluation(genomes, config):
     win = WINDOW
     generation += 1
 
+    false_positive = 0
+    false_negative = 0
+    true_positive = 0
+    true_negative = 0
+
     # start by creating lists holding the genome itself, the
     # neural network associated with the genome and the
     # bird object that uses that network to play
@@ -243,8 +249,8 @@ def genome_evaluation(genomes, config):
     for genome_id, genome in genomes:
         genome.fitness = 0  # start with fitness level of 0
         net = neat.nn.FeedForwardNetwork.create(genome, config)
-        nets.append(net) #add genomes number of nets returned from the library into the nets list
-        birds.append(Player(230, 350)) # add genomes number of bird instances into the birds lise
+        nets.append(net) #add genome number of nets returned from the library into the nets list
+        birds.append(Player(230, 350)) # add genome number of bird instances into the birds lise
         ge.append(genome)
 
     base = Ground(FLOOR) # create the base of the map
@@ -280,6 +286,9 @@ def genome_evaluation(genomes, config):
 
             if output[0] > 0.5:  # tan-h activation function. If over 0.5, bird will jump
                 bird.jump()
+                bird.jumping = True
+            else:
+                bird.jumping = False
 
         base.move()
 
@@ -296,6 +305,15 @@ def genome_evaluation(genomes, config):
                     nets.pop(birds.index(bird)) # remove the 'dead' birds from the net, genome, and birds list
                     ge.pop(birds.index(bird))
                     birds.pop(birds.index(bird))
+                    if bird.jumping: # bird jumped and died
+                        false_positive += 1
+                    elif not bird.jumping: # bird did not jump and died
+                        false_negative += 1
+                else:
+                    if bird.jumping: # bird jumped and lived
+                        true_positive += 1
+                    elif not bird.jumping: # bird did not jump and lived
+                        true_negative += 1
 
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 pipes_to_remove.append(pipe)
@@ -325,7 +343,12 @@ def genome_evaluation(genomes, config):
 
         draw_game(WINDOW, birds, pipes, base, score, generation, pipe_ind)
 
-        # score limit
+        # print the bird's individual confusion matrix when it dies
+        print('                 | Bird Should Jump | Bird Should Not Jump|')
+        print('Bird Jumped      |{:18}|{:21}|'.format(true_positive, false_positive))
+        print('Bird Did Not Jump|{:18}|{:21}|'.format(false_negative, true_negative))
+
+        # score limit check
         if score > SCORE_LIMIT:
             break
 
@@ -348,6 +371,7 @@ def run_neat_algorithm(config_file):
 
     visualize.draw_net(config, winner)
     visualize.plot_stats(stats)
+    visualize.plot_species(stats)
 
 if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
