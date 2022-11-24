@@ -111,8 +111,8 @@ class Player:
 
 
 class Pipe:
-    GAP = 160
-    VEL = 7
+    GAP = 200
+    VEL = 5
 
     def __init__(self, x):
         self.x = x
@@ -355,18 +355,18 @@ def genome_evaluation(genomes, config):
         # print('Bird Did Not Jump|{:18}|{:21}|'.format(false_negative, true_negative))
 
         # score limit check
-        if score > SCORE_LIMIT:
-            break
+        # if score > SCORE_LIMIT:
+        #     break
 
-    genome_accuracy = (true_positive + true_negative)/(true_positive + true_negative + false_positive + false_negative)
-    genome_precision = true_positive/(true_positive + false_positive)
-    genome_recall = true_positive/(true_positive + false_negative)
-    genome_f1 = 2 * ((genome_precision * genome_recall)/(genome_precision + genome_recall))
-
-    accuracy_list.append(genome_accuracy)
-    precision_list.append(genome_precision)
-    recall_list.append(genome_recall)
-    f1_list.append(genome_f1)
+    # genome_accuracy = (true_positive + true_negative)/(true_positive + true_negative + false_positive + false_negative)
+    # genome_precision = true_positive/(true_positive + false_positive)
+    # genome_recall = true_positive/(true_positive + false_negative)
+    # genome_f1 = 2 * ((genome_precision * genome_recall)/(genome_precision + genome_recall))
+    #
+    # accuracy_list.append(genome_accuracy)
+    # precision_list.append(genome_precision)
+    # recall_list.append(genome_recall)
+    # f1_list.append(genome_f1)
 
 def run_neat_algorithm(config_file):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
@@ -380,7 +380,7 @@ def run_neat_algorithm(config_file):
     p.add_reporter(stats)
 
     # Run for up to 50 generations.
-    winner = p.run(genome_evaluation, NUM_OF_GENERATIONS)
+    winner = p.run(genome_evaluation, 300)
 
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
