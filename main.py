@@ -4,6 +4,8 @@ import os
 import time
 import neat
 import visualize
+import matplotlib.pyplot as plt
+import numpy as np
 pygame.font.init()  # init font
 
 WIDTH = 600
@@ -13,8 +15,8 @@ FLOOR = 730
 BACKGROUND_WIDTH = 600
 BACKGROUND_HEIGHT = 900
 
-NUM_OF_GENERATIONS = 5
-SCORE_LIMIT = 5
+NUM_OF_GENERATIONS = 50
+SCORE_LIMIT = 20
 
 # for the meme of comicsans
 STAT_FONT = pygame.font.SysFont("comicsans", 50)
@@ -229,6 +231,10 @@ def draw_game(win, birds, pipes, base, score, generation, pipe_ind):
 
     pygame.display.update()
 
+accuracy_list = []
+precision_list = []
+recall_list = []
+f1_list = []
 
 def genome_evaluation(genomes, config):
     global WINDOW, generation
@@ -344,13 +350,23 @@ def genome_evaluation(genomes, config):
         draw_game(WINDOW, birds, pipes, base, score, generation, pipe_ind)
 
         # print the bird's individual confusion matrix when it dies
-        print('                 | Bird Should Jump | Bird Should Not Jump|')
-        print('Bird Jumped      |{:18}|{:21}|'.format(true_positive, false_positive))
-        print('Bird Did Not Jump|{:18}|{:21}|'.format(false_negative, true_negative))
+        # print('                 | Bird Should Jump | Bird Should Not Jump|')
+        # print('Bird Jumped      |{:18}|{:21}|'.format(true_positive, false_positive))
+        # print('Bird Did Not Jump|{:18}|{:21}|'.format(false_negative, true_negative))
 
         # score limit check
         if score > SCORE_LIMIT:
             break
+
+    genome_accuracy = (true_positive + true_negative)/(true_positive + true_negative + false_positive + false_negative)
+    genome_precision = true_positive/(true_positive + false_positive)
+    genome_recall = true_positive/(true_positive + false_negative)
+    genome_f1 = 2 * ((genome_precision * genome_recall)/(genome_precision + genome_recall))
+
+    accuracy_list.append(genome_accuracy)
+    precision_list.append(genome_precision)
+    recall_list.append(genome_recall)
+    f1_list.append(genome_f1)
 
 def run_neat_algorithm(config_file):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
@@ -372,6 +388,23 @@ def run_neat_algorithm(config_file):
     visualize.draw_net(config, winner)
     visualize.plot_stats(stats)
     visualize.plot_species(stats)
+
+    figure, axis = plt.subplots(2, 2)
+    figure.suptitle('445 Project')
+
+    axis[0, 0].plot(accuracy_list)
+    axis[0, 0].set_title('Accuracy')
+
+    axis[0, 1].plot(precision_list)
+    axis[0, 1].set_title('Precision')
+
+    axis[1, 0].plot(recall_list)
+    axis[1, 0].set_title('Recall')
+
+    axis[1, 1].plot(f1_list)
+    axis[1, 1].set_title('F1 Score')
+
+    plt.show()
 
 if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
