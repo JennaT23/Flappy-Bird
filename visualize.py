@@ -6,6 +6,9 @@ import warnings
 import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
+######################
+from sklearn import metrics
+##########################
 import os
 os.environ["PATH"] += os.pathsep + 'C:\\Program Files\\Graphviz\\bin'
 
@@ -196,3 +199,11 @@ def draw_net(config, genome, view=True, filename=None, node_names=None, show_dis
     dot.render(filename, view=view)
 
     return dot
+
+
+def plot_confusion_matrix(actual, predicted, figFileName):
+    confusion_matrix = metrics.confusion_matrix(actual, predicted)
+    cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=["bird jumped", "bird did not jump"])
+    cm_display.plot()
+    plt.savefig(figFileName + ".svg")
+    plt.show()

@@ -235,6 +235,8 @@ accuracy_list = []
 precision_list = []
 recall_list = []
 f1_list = []
+totalActual = []
+totalPredicted = []
 
 def genome_evaluation(genomes, config):
     global WINDOW, generation
@@ -262,6 +264,9 @@ def genome_evaluation(genomes, config):
     base = Ground(FLOOR) # create the base of the map
     pipes = [Pipe(700)] #create pipes
     score = 0
+
+    genome_actual = []
+    genome_predicted = []
 
     clock = pygame.time.Clock()
 
@@ -313,13 +318,21 @@ def genome_evaluation(genomes, config):
                     birds.pop(birds.index(bird))
                     if bird.jumping: # bird jumped and died
                         false_positive += 1
+                        genome_predicted.append("bird jumped")
+                        genome_actual.append("bird did not jump")
                     elif not bird.jumping: # bird did not jump and died
                         false_negative += 1
+                        genome_predicted.append("bird did not jump")
+                        genome_actual.append("bird jumped")
                 else:
                     if bird.jumping: # bird jumped and lived
                         true_positive += 1
+                        genome_predicted.append("bird jumped")
+                        genome_actual.append("bird jumped")
                     elif not bird.jumping: # bird did not jump and lived
                         true_negative += 1
+                        genome_predicted.append("bird did not jump")
+                        genome_actual.append("bird did not jump")
 
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 pipes_to_remove.append(pipe)
@@ -367,6 +380,8 @@ def genome_evaluation(genomes, config):
     precision_list.append(genome_precision)
     recall_list.append(genome_recall)
     f1_list.append(genome_f1)
+    totalActual.extend(genome_actual)
+    totalPredicted.extend(genome_predicted)
 
 def run_neat_algorithm(config_file):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
@@ -388,6 +403,8 @@ def run_neat_algorithm(config_file):
     visualize.draw_net(config, winner)
     visualize.plot_stats(stats)
     visualize.plot_species(stats)
+    visualize.plot_confusion_matrix(totalActual, totalPredicted, "final_cm")
+
 
     figure, axis = plt.subplots(2, 2)
     figure.suptitle('445 Project')
