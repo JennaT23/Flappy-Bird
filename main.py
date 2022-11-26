@@ -355,18 +355,18 @@ def genome_evaluation(genomes, config):
         # print('Bird Did Not Jump|{:18}|{:21}|'.format(false_negative, true_negative))
 
         # score limit check
-        # if score > SCORE_LIMIT:
-        #     break
+        if score > SCORE_LIMIT:
+            break
 
-    # genome_accuracy = (true_positive + true_negative)/(true_positive + true_negative + false_positive + false_negative)
-    # genome_precision = true_positive/(true_positive + false_positive)
-    # genome_recall = true_positive/(true_positive + false_negative)
-    # genome_f1 = 2 * ((genome_precision * genome_recall)/(genome_precision + genome_recall))
-    #
-    # accuracy_list.append(genome_accuracy)
-    # precision_list.append(genome_precision)
-    # recall_list.append(genome_recall)
-    # f1_list.append(genome_f1)
+    genome_accuracy = (true_positive + true_negative)/(true_positive + true_negative + false_positive + false_negative)
+    genome_precision = true_positive/(true_positive + false_positive)
+    genome_recall = true_positive/(true_positive + false_negative)
+    genome_f1 = 2 * ((genome_precision * genome_recall)/(genome_precision + genome_recall))
+
+    accuracy_list.append(genome_accuracy)
+    precision_list.append(genome_precision)
+    recall_list.append(genome_recall)
+    f1_list.append(genome_f1)
 
 def run_neat_algorithm(config_file):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
@@ -391,18 +391,28 @@ def run_neat_algorithm(config_file):
 
     figure, axis = plt.subplots(2, 2)
     figure.suptitle('445 Project')
+    # figure.tight_layout()
 
     axis[0, 0].plot(accuracy_list)
-    axis[0, 0].set_title('Accuracy')
+    axis[0, 0].set_title('Model Accuracy')
+    # axis[0, 0].set(xlabel='Generation', ylabel='Accuracy')
 
     axis[0, 1].plot(precision_list)
-    axis[0, 1].set_title('Precision')
+    axis[0, 1].set_title('Model Precision')
+    # axis[0, 1].set(xlabel='Generation', ylabel='Precision')
 
     axis[1, 0].plot(recall_list)
-    axis[1, 0].set_title('Recall')
+    axis[1, 0].set_title('Model Recall')
+    # axis[1, 0].set(xlabel='Generation', ylabel='Recall')
 
     axis[1, 1].plot(f1_list)
-    axis[1, 1].set_title('F1 Score')
+    axis[1, 1].set_title('Model F1 Score')
+    # axis[1, 1].set(xlabel='Generation', ylabel='F1 Score')
+
+    print(accuracy_list)
+    print(precision_list)
+    print(recall_list)
+    print(f1_list)
 
     plt.show()
 
