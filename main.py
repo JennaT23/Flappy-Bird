@@ -36,7 +36,7 @@ for x in range(1, 4):
     player_images.append(pygame.transform.scale2x(pygame.image.load('images/bird' + str(x) + '.png')))
 ground_image = pygame.transform.scale2x(pygame.image.load('images/base.png').convert_alpha())
 
-generation = 0
+generation = 1
 
 class Player:
     MAX_ROTATION = 25
@@ -200,6 +200,7 @@ def blitRotateCenter(surf, image, top_left, angle):
 def draw_game(win, birds, pipes, base, score, generation, pipe_ind):
     if generation == 0:
         generation = 1
+
     win.blit(background_image, (0, 0))
 
     for pipe in pipes:
@@ -237,10 +238,13 @@ recall_list = []
 f1_list = []
 totalActual = []
 totalPredicted = []
+num_gens = []
 
 def genome_evaluation(genomes, config):
     global WINDOW, generation
     win = WINDOW
+
+    num_gens.append(generation)
     generation += 1
 
     false_positive = 0
@@ -383,6 +387,7 @@ def genome_evaluation(genomes, config):
     totalActual.extend(genome_actual)
     totalPredicted.extend(genome_predicted)
 
+
 def run_neat_algorithm(config_file):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
 
@@ -395,7 +400,7 @@ def run_neat_algorithm(config_file):
     p.add_reporter(stats)
 
     # Run for up to 50 generations.
-    winner = p.run(genome_evaluation, 300)
+    winner = p.run(genome_evaluation, NUM_OF_GENERATIONS)
 
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
@@ -404,26 +409,7 @@ def run_neat_algorithm(config_file):
     visualize.plot_stats(stats)
     visualize.plot_species(stats)
     visualize.plot_confusion_matrix(totalActual, totalPredicted, "final_cm")
-
-    figure, axis = plt.subplots(2, 2)
-    figure.suptitle('445 Project')
-    # figure.tight_layout()
-
-    axis[0, 0].plot(accuracy_list)
-    axis[0, 0].set_title('Model Accuracy')
-    # axis[0, 0].set(xlabel='Generation', ylabel='Accuracy')
-
-    axis[0, 1].plot(precision_list)
-    axis[0, 1].set_title('Model Precision')
-    # axis[0, 1].set(xlabel='Generation', ylabel='Precision')
-
-    axis[1, 0].plot(recall_list)
-    axis[1, 0].set_title('Model Recall')
-    # axis[1, 0].set(xlabel='Generation', ylabel='Recall')
-
-    axis[1, 1].plot(f1_list)
-    axis[1, 1].set_title('Model F1 Score')
-    # axis[1, 1].set(xlabel='Generation', ylabel='F1 Score')
+    visualize.plot_results_graphs(num_gens, accuracy_list, recall_list, precision_list, f1_list, "results")
 
     print(accuracy_list)
     print(precision_list)
@@ -431,6 +417,7 @@ def run_neat_algorithm(config_file):
     print(f1_list)
 
     plt.show()
+
 
 if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)

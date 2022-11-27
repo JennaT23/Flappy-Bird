@@ -203,7 +203,33 @@ def draw_net(config, genome, view=True, filename=None, node_names=None, show_dis
 
 def plot_confusion_matrix(actual, predicted, figFileName):
     confusion_matrix = metrics.confusion_matrix(actual, predicted)
-    cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=["bird jumped", "bird did not jump"])
+    cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=["jump", "no jump"])
+    plt.tight_layout()
     cm_display.plot()
     plt.savefig(figFileName + ".svg")
+
+
+def plot_results_graphs(num_gens, accuracy_list, recall_list, precision_list, f1_list, fileName):
+    fig, ax = plt.subplots(2, 2)
+    fig.suptitle('Flappy Bird Analysis')
+    fig.tight_layout(pad=1.75)
+
+    ax[0, 0].plot(num_gens, accuracy_list)
+    ax[0, 0].set(xlabel='Generation', ylabel='Accuracy')
+    ax[0, 0].grid()
+
+    ax[1, 0].plot(num_gens, recall_list)
+    ax[1, 0].set(xlabel='Generation', ylabel='Recall')
+    ax[1, 0].grid()
+
+    ax[0, 1].plot(num_gens, precision_list)
+    ax[0, 1].set(xlabel='Generation', ylabel='Precision')
+    ax[0, 1].grid()
+
+    ax[1, 1].plot(num_gens, f1_list)
+    ax[1, 1].set(xlabel='Generation', ylabel='F1 Score')
+    ax[1, 1].grid()
+
+    plt.tight_layout()
+    plt.savefig(fileName + ".svg")
     plt.show()
